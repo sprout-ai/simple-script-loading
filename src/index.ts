@@ -1,28 +1,23 @@
 export interface Options {
   attrs?: Record<string, string>
-  id: string
   src?: string
   code?: string
-  inBody?: boolean
+  body?: boolean
 }
 
 export default function simpleScriptLoading({
   attrs,
-  id,
   src,
   code,
-  inBody = false,
+  body = false,
 }: Options) {
   return new Promise((resolve, reject) => {
-    if (typeof id !== "string" || !id) {
-      reject(new Error("id is required"))
-      return
-    }
-
+    const { id } = attrs || {}
     const existingScript = document.getElementById(id)
 
     if (existingScript) {
-      return resolve(existingScript)
+      resolve(existingScript)
+      return
     }
 
     const script = document.createElement("script")
@@ -31,6 +26,12 @@ export default function simpleScriptLoading({
     if (src && code) {
       reject(new Error("Cannot have both src and code"))
       return
+    }
+
+    if (attrs && typeof attrs === "object") {
+      for (const attr of Object.keys(attrs)) {
+        script.setAttribute(attr, attrs[attr])
+      }
     }
 
     if (src) {
@@ -47,15 +48,10 @@ export default function simpleScriptLoading({
 
     if (code) {
       script.appendChild(document.createTextNode(code))
+      resolve(script)
     }
 
-    if (attrs && typeof attrs === "object") {
-      for (const attr of Object.keys(attrs)) {
-        script.setAttribute(attr, attrs[attr])
-      }
-    }
-
-    const target = inBody ? document.body : document.head
+    const target = body ? document.body : document.head
     target.appendChild(script)
   })
 }
